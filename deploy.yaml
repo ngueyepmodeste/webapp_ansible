@@ -1,0 +1,25 @@
+- hosts: 172.31.22.199
+  become: true
+
+  tasks:
+    # Install Docker
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    # Start and enable Docker
+    - name: Start and enable Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    # Run the httpd image as a container
+    - name: Run the httpd image
+      ansible.builtin.docker_container:
+        name: modeste_ansible
+        image: httpd:latest
+        state: started
+        ports:
+          - "80:80"
