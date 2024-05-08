@@ -1,0 +1,62 @@
+- hosts: 172.31.22.199
+  become: true
+
+  tasks:
+    # Create the /var/www/html directory
+    - name: Create the /var/www/html directory
+      ansible.builtin.file:
+        path: /var/www/html
+        state: directory
+        mode: 0755
+
+    # Install Docker
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    # Start and enable Docker
+    - name: Start and enable Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    # Run the httpd image as a container
+    - name: Run the httpd image
+      ansible.builtin.docker_container:
+        name: modeste_ansible
+        image: httpd:latest
+        state: started
+        ports:
+          - "80:80"
+
+    # Generate the index.html file
+    - name: Generate the index.html file
+      ansible.builtin.template:
+        src: /home/ubuntu/webapp_ansible/templates/index.html.j2
+        dest: /var/www/html/index.html
+
+    # Copy the index.html file to the target host
+    - name: Copy the index.html file to the target host
+      ansible.builtin.copy:
+        src: /var/www/html/index.html
+        dest: /var/www/html/index.html
+        remote_src: true
+    # Execute a Docker command
+    - name: Execute a Docker command
+      ansible.builtin.docker_container:
+        name: modeste_ansible
+        image: httpd:latest
+        command: index.html
+        state: present
+                      
+    # Install git
+    - name: Install git & wget
+      ansible.builtin.apt:
+        name: '{{item}}'
+        state: present
+        loop:
+          - git
+          - wget
+      when: ansible_facts['os_family'] == 'ubuntu'
